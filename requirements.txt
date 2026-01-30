@@ -1,0 +1,11 @@
+numpy
+fastdtw
+scipy
+matplotlib
+PyQt6
+scikit-learn
+
+
+"""
+ok the pattern discovery part is still not working properly but let's stop here and i want you t expalin the workflow of the entire program in details starting from the input data, there are 2 folders (march 14, 2025 and may 1,2025) which contain json files and there is json files outside them in the event data folder the one we are in) tell me did you scan them all or scanned a part and which part you scanned and how you scan them and filter them to get the desired data and what are the desired data exactly that we want from the json files and after you have them, howw you process them and how you result the output, please expalin all of that in details and explain how the python files interact with each other, and put that all in a file to be able to read it carefully
+"""
