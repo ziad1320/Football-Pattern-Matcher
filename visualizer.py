@@ -116,7 +116,7 @@ class Visualizer:
         ax.set_position([0, 0, 1, 1])
 
     @staticmethod
-    def plot_chain(ax, coords, color='blue', label=None, linestyle='-', marker='o'):
+    def plot_chain(ax, coords, color='blue', label=None, linestyle='-', marker='o', alpha=1.0):
         if not coords:
             return
         
@@ -124,12 +124,12 @@ class Visualizer:
         ys = [p[1] for p in coords]
         
         # Plot path
-        ax.plot(xs, ys, color=color, linestyle=linestyle, linewidth=2, label=label, zorder=2)
+        ax.plot(xs, ys, color=color, linestyle=linestyle, linewidth=2, label=label, zorder=2, alpha=alpha)
         # Plot start
-        ax.scatter(xs[0], ys[0], color='white', edgecolor=color, s=100, marker='o', zorder=3)
+        ax.scatter(xs[0], ys[0], color='white', edgecolor=color, s=100, marker='o', zorder=3, alpha=alpha)
         # Plot rest
-        ax.scatter(xs[1:], ys[1:], color=color, s=50, marker=marker, zorder=3)
+        ax.scatter(xs[1:], ys[1:], color=color, s=50, marker=marker, zorder=3, alpha=alpha)
         # Arrows for direction?
         for i in range(len(xs) - 1):
             ax.annotate('', xy=(xs[i+1], ys[i+1]), xytext=(xs[i], ys[i]),
-                        arrowprops=dict(arrowstyle='->', color=color, lw=1.5), zorder=2)
+                        arrowprops=dict(arrowstyle='->', color=color, lw=1.5, alpha=alpha), zorder=2)

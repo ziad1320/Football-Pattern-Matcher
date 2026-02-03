@@ -74,6 +74,7 @@ class CanvasWidget(QWidget):
         
         self.clicks = []
         self.result_chain = None
+        self.comparison_chain = None
         
         self.draw()
         self.canvas.mpl_connect('button_press_event', self.on_click)
@@ -86,9 +87,13 @@ class CanvasWidget(QWidget):
         if self.clicks:
             Visualizer.plot_chain(self.ax, self.clicks, color='red', label='Query', linestyle='--', marker='x')
 
-        # Draw result
+        # Draw comparison (Previous selection)
+        if self.comparison_chain:
+            Visualizer.plot_chain(self.ax, self.comparison_chain, color='#E67E22', label='Previous', linestyle='-', alpha=0.7)
+
+        # Draw result (Current selection)
         if self.result_chain:
-            Visualizer.plot_chain(self.ax, self.result_chain, color='blue', label='Match', linestyle='-')
+            Visualizer.plot_chain(self.ax, self.result_chain, color='blue', label='Current', linestyle='-')
             self.ax.legend()
             
         self.canvas.draw()
@@ -103,6 +108,7 @@ class CanvasWidget(QWidget):
     def clear(self):
         self.clicks = []
         self.result_chain = None
+        self.comparison_chain = None
         self.draw()
 
 class MainWindow(QMainWindow):
@@ -127,6 +133,11 @@ class MainWindow(QMainWindow):
         self.tab_discovery = QWidget()
         self.setup_discovery_tab()
         self.tabs.addTab(self.tab_discovery, "Pattern Discovery")
+        
+        # Tab 3: Length Analysis
+        self.tab_length = QWidget()
+        self.setup_length_tab()
+        self.tabs.addTab(self.tab_length, "Length Analysis")
         
         # Start loading
         self.start_loading()
@@ -329,6 +340,110 @@ class MainWindow(QMainWindow):
         chain = item.data(Qt.ItemDataRole.UserRole)
         self.discovery_canvas.result_chain = chain.get('coords')
         self.discovery_canvas.draw()
+
+    def setup_length_tab(self):
+        layout = QHBoxLayout(self.tab_length)
+        
+        # Left: Controls and List
+        left = QWidget()
+        l_layout = QVBoxLayout(left)
+        
+        # Controls
+        controls = QHBoxLayout()
+        controls.addWidget(QLabel("Select Chain Length:"))
+        self.spin_length = QSpinBox()
+        self.spin_length.setRange(3, 77) # Based on data
+        self.spin_length.setValue(3)
+        controls.addWidget(self.spin_length)
+        
+        self.btn_len_analyze = QPushButton("Analyze Length")
+        self.btn_len_analyze.clicked.connect(self.analyze_by_length)
+        controls.addWidget(self.btn_len_analyze)
+        
+        l_layout.addLayout(controls)
+        
+        self.lbl_len_status = QLabel("Ready.")
+        l_layout.addWidget(self.lbl_len_status)
+        
+        self.list_length = QListWidget()
+        self.list_length.itemClicked.connect(self.show_length_match)
+        l_layout.addWidget(self.list_length)
+        
+        # Right: Canvas
+        self.length_canvas = CanvasWidget()
+        
+        splitter = QSplitter(Qt.Orientation.Horizontal)
+        splitter.addWidget(left)
+        splitter.addWidget(self.length_canvas)
+        splitter.setStretchFactor(0, 1)
+        splitter.setStretchFactor(1, 2)
+        
+        layout.addWidget(splitter)
+
+    def analyze_by_length(self):
+        if not self.matcher: return
+        
+        target_len = self.spin_length.value()
+        self.lbl_len_status.setText(f"Finding chains with length {target_len}...")
+        QApplication.processEvents()
+        
+        # Filter chains
+        # Note: 'coords' is a list of tuples.
+        filtered_chains = [c for c in self.matcher.chains if len(c.get('coords', [])) == target_len]
+        
+        if not filtered_chains:
+            self.lbl_len_status.setText(f"No chains found with length {target_len}.")
+            self.list_length.clear()
+            return
+            
+        self.lbl_len_status.setText(f"Found {len(filtered_chains)} chains. Clustering...")
+        QApplication.processEvents()
+        
+        # Cluster this subset
+        sub_clusterer = PatternClusterer(filtered_chains)
+        sub_clusterer.extract_features(n_points=target_len) # Use actual length for resampling? Or fixed?
+        # Using fixed n_points=10 allows standard comparison, but maybe user wants raw shape?
+        # Let's stick to n_points=10 for standardized clustering comparison, 
+        # but since they ARE the same length, we could use that length.
+        # However, extract_features expects fixed size. Let's use 10 for consistency.
+        sub_clusterer.extract_features(n_points=10) 
+        sub_clusterer.cluster(threshold=40)
+        
+        # Display results (Grouped)
+        self.list_length.clear()
+        
+        # Sort clusters by size
+        clusters = sub_clusterer.cluster_data
+        sorted_keys = sorted(clusters.keys(), key=lambda k: len(clusters[k]), reverse=True)
+        
+        for cid in sorted_keys:
+            indices = clusters[cid]
+            # Add header
+            header = QListWidgetItem(f"--- Group {cid} (Size: {len(indices)}) ---")
+            header.setBackground(Qt.GlobalColor.lightGray)
+            header.setFlags(Qt.ItemFlag.NoItemFlags) # Non-selectable
+            self.list_length.addItem(header)
+            
+            # Add items
+            for idx in indices:
+                chain = filtered_chains[idx]
+                match = chain.get('match_name', 'Unknown')
+                t_id = chain.get('team_id')
+                item = QListWidgetItem(f"   {match} | Team {t_id}")
+                item.setData(Qt.ItemDataRole.UserRole, chain)
+                self.list_length.addItem(item)
+        
+        self.lbl_len_status.setText(f"Found {len(filtered_chains)} chains in {len(clusters)} groups.")
+
+    def show_length_match(self, item):
+        chain = item.data(Qt.ItemDataRole.UserRole)
+        if chain:
+            # Move current to comparison
+            self.length_canvas.comparison_chain = self.length_canvas.result_chain
+            # Set new
+            self.length_canvas.result_chain = chain.get('coords')
+            self.length_canvas.clicks = [] # Clear query
+            self.length_canvas.draw()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

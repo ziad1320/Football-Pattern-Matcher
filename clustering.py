@@ -1,4 +1,3 @@
-
 import numpy as np
 from scipy.spatial.distance import cdist
 from typing import List, Dict
@@ -115,20 +114,11 @@ class PatternClusterer:
             
         indices_in_full_list = self.cluster_data[cluster_id]
         
-        # Find local indices in feature matrix
-        # This is a bit slow, so we map back
-        # Map: Full Index -> Feature Matrix Index
-        full_to_feat = {full_idx: feat_idx for feat_idx, full_idx in enumerate(self.valid_indices)}
-        
-        feat_indices = [full_to_feat[idx] for idx in indices_in_full_list if idx in full_to_feat]
-        
-        if not feat_indices:
+        if not indices_in_full_list:
             return None
             
-        # Compute mean
-        feats = self.feature_matrix[feat_indices]
-        mean_feat = np.mean(feats, axis=0)
-        
-        n_points = len(mean_feat) // 2
-        coords = mean_feat.reshape((n_points, 2))
-        return coords.tolist()
+        # Return the Leader (first element) of the cluster
+        # This is a REAL valid chain, not a computed average.
+        leader_idx = indices_in_full_list[0]
+        chain = self.chains[leader_idx]
+        return chain.get('coords')
