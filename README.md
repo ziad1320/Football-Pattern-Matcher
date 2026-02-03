@@ -53,7 +53,7 @@ pip install -r requirements.txt
 ### 2. Start The App
 Launch the main interface:
 ```bash
-python code/gui.py
+python gui.py
 ```
 
 ### 3. Data Setup
