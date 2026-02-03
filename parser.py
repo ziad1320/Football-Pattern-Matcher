@@ -82,8 +82,7 @@ class ChainParser:
                             'team_id': current_team_id,
                             'coords': current_chain,
                             'match_name': match_name,
-                            'timestamp': timestamp # Keeping last timestamp or start? This is end.
-                            # We'll fix to start timestamp if needed, but end is fine.
+                            'timestamp': timestamp 
                         })
                     current_chain = []
                     current_team_id = team_id
@@ -148,30 +147,3 @@ class ChainParser:
             print(f"Failed to export JSON: {e}")
         
         return all_chains
-
-if __name__ == "__main__":
-    # Test run
-    # Assuming the data is in "d:/SBME/3rd year/1st term/DSP/DSP_taska/sports/an/Event Data"
-    # But for the script to run relatively, we should use the relative path or absolute as needed.
-    # The user is in "d:\SBME...\Event Data", so current dir is the data dir.
-    
-    # Using "." as data_dir since the script will be in "code/" parallel to data? 
-    # Or strict path.
-    # User said: "The Data Source ... Limit to the folder we are in right now"
-    # User said: "note : i created a folder named code where you can put all the code in it"
-    # So if this script is in `code/parser.py`, the data is in `../`.
-    
-    data_folder = ".." # Assuming we run from 'code' directory
-    # If running from root of workspace (Event Data), then data_folder is "."
-    
-    # Verify execution context: We will likely run this via `python code/parser.py`, so cwd is likely root.
-    # Let's check absolute path provided by user rules vs current assumption.
-    # I'll use the absolute path to be safe.
-    
-    DATA_PATH = r"d:/SBME/3rd year/1st term/DSP/DSP_taska/sports/an/Event Data"
-    
-    parser = ChainParser(DATA_PATH)
-    chains = parser.process_all()
-    
-    if chains:
-        print(f"Example Chain: {chains[0]['coords']}")

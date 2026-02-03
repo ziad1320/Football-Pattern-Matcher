@@ -13,25 +13,13 @@ class PatternMatcher:
 
     def normalize_sequence(self, seq: List[Tuple[float, float]]) -> np.ndarray:
         """
-        Optional: Normalize sequence by translating start to (0,0) or other normalization.
-        For football tactical patterns, relative geometry matters.
-        Simple translation to origin (0,0) helps comparing shapes regardless of pitch location?
-        
-        However, the user might want "Defense to Right Back" (location specific).
-        If strict location matters, NO normalization.
-        User prompt: "Defense to Right Back to Striker". This implies specific zones.
-        So we should prob match on ABSOLUTE coordinates.
-        But maybe we should handle direction of play?
-        StatsBomb data usually normalizes play direction (Left to Right) or similar?
-        In PFF/StatsBomb, usually home team plays L->R?
-        
-        Let's assume absolute coordinates for now.
-        Inputs might need cast to float.
+        Normalize sequence by translating start to (0,0).
+        This allows matching shapes regardless of absolute position.
         """
-        arr = np.array(seq)
+        arr = np.array(seq, dtype=float)
         if arr.shape[0] == 0:
             return np.zeros((0, 2))
-        return arr
+        return arr - arr[0]
 
     def search(self, query: List[Tuple[float, float]], top_k: int = 5) -> List[Dict]:
         """
@@ -76,7 +64,7 @@ if __name__ == "__main__":
     mock_chains = [
         {'coords': [(0,0), (10,10), (20,20)]},
         {'coords': [(0,0), (10,0), (20,0)]}, # Flat
-        {'coords': [(0,0), (5,5), (20,20)]}, # Similar to first
+        {'coords': [(100,100), (110,110), (120,120)]}, # Same as first, shifted
     ]
     
     matcher = PatternMatcher(mock_chains)

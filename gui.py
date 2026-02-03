@@ -27,12 +27,15 @@ class DataLoaderThread(QThread):
             # Paths
             data_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             cwd = os.getcwd()
-            target_file = "10502.json"
+            # Determine data path (Parent of the 'code' folder)
+            _dir = os.path.dirname(os.path.abspath(__file__))
+            possible_data = os.path.dirname(_dir)
             
-            if os.path.exists(os.path.join(cwd, target_file)):
-                data_path = cwd
+            # Check if json files exist there, otherwise try CWD
+            if any(f.endswith('.json') for f in os.listdir(possible_data)):
+                data_path = possible_data
             else:
-                 data_path = os.path.join(os.path.dirname(__file__), "..")
+                data_path = cwd
             
             cache_path = os.path.join(data_path, "chains_cache.pkl")
             

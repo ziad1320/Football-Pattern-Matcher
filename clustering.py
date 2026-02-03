@@ -132,7 +132,3 @@ class PatternClusterer:
         n_points = len(mean_feat) // 2
         coords = mean_feat.reshape((n_points, 2))
         return coords.tolist()
-
-if __name__ == "__main__":
-    # Test stub
-    pass
